@@ -48,7 +48,9 @@ def _git(root: Path, *args: str) -> str:
     """프로젝트 폴더에서 git 을 돌린다."""
     try:
         done = subprocess.run(
-            ["git", "-C", str(root), *args],
+            # core.quotepath=false 를 주지 않으면 한글 파일명이
+            # ë 같은 8진 이스케이프로 나온다.
+            ["git", "-C", str(root), "-c", "core.quotepath=false", *args],
             capture_output=True,
             text=True,
             encoding="utf-8",
