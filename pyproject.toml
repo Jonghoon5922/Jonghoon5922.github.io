@@ -1,0 +1,44 @@
+[project]
+name = "ilji-mcp"
+dynamic = ["version"]
+description = "내 프로젝트들의 git 기록에서 블로그 글 초안을 뽑고, 사람이 승인하면 배포하는 로컬 MCP 서버"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Jonghoon5922" }]
+keywords = ["mcp", "blog", "git", "claude", "astro"]
+
+dependencies = [
+    # 서재와 같은 이유: MCP 2.x에서 FastMCP가 MCPServer로 개명됐다. 1.x가 깔리면 import부터 실패한다.
+    "mcp>=2.0",
+    "typer>=0.15",
+    "rich>=13.9",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Jonghoon5922/Jonghoon5922.github.io"
+
+[project.scripts]
+ilji = "ilji.cli:app"
+ilji-mcp = "ilji.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+
+[tool.hatch.version]
+path = "ilji/__init__.py"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# src/ 는 Astro 가 쓴다. 파이썬 패키지는 최상위 ilji/ 하나뿐이다.
+[tool.hatch.build.targets.wheel]
+packages = ["ilji"]
+
+[tool.hatch.build.targets.sdist]
+include = ["ilji", "tests", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
