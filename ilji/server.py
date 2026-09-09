@@ -273,6 +273,16 @@ def create_server(config: Config) -> MCPServer:
     def open_pr_tool(draft_id: str, title: str | None = None, body: str | None = None) -> dict:
         return publishing.open_pr(config, draft_id, title=title, body=body)
 
+    @server.tool(
+        name="merge_pr",
+        description=(
+            "PR 을 squash 머지하고 로컬 저장소를 맞춘다. 머지되면 Actions 가 빌드해 사이트에 반영된다. "
+            "로컬을 안 맞추면 '지난 글 이후' 계산이 어긋나므로 머지 후 fast-forward 까지 함께 한다."
+        ),
+    )
+    def merge_pr_tool(pr: int, delete_branch: bool = True) -> dict:
+        return publishing.merge_pr(config, pr, delete_branch=delete_branch)
+
     return server
 
 

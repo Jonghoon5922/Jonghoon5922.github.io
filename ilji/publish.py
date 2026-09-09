@@ -237,3 +237,43 @@ def open_pr(
         "check": result,
         "note": "PR 을 열었다. merge 는 사람이 한다. merge 되면 사이트에 반영된다.",
     }
+
+
+def merge_pr(config: Config, pr: int | str, delete_branch: bool = True) -> dict:
+    """PR 을 머지하고 로컬을 맞춘다.
+
+    머지만 하고 로컬을 안 맞추면 다음 주가 깨진다 — last_published 가 로컬 posts/ 를
+    읽기 때문에, 로컬이 뒤처져 있으면 "지난 글 이후" 계산이 처음부터 다시 시작된다.
+    그래서 머지 뒤 fast-forward 로 당겨오고, 남은 초안 파일을 지운다.
+    """
+    slug = _repo_slug(config)
+    if not slug:
+        return {"merged": False, "note": "GitHub 원격이 아니다."}
+
+    args = ["pr", "merge", str(pr), "--repo", slug, "--squash"]
+    if delete_branch:
+        args.append("--delete-branch")
+    rc, out, err = _gh(*args)
+    if rc != 0:
+        return {"merged": False, "note": f"머지 실패: {(err or out).strip()}"}
+
+    result: dict = {"merged": True, "pr": pr, "synced": False, "note": "머지했다."}
+
+    # 로컬을 앞으로 당긴다. 작업 중인 파일이 있어도 fast-forward 는 그것들을 건드리지 않는다.
+    try:
+        _git(config.blog.path, "fetch", "--quiet", "origin", "main")
+        _git(config.blog.path, "merge", "--ff-only", "origin/main")
+        result["synced"] = True
+    except GitError as exc:
+        result["note"] = f"머지는 됐지만 로컬 동기화가 안 됐다 (직접 pull 필요): {exc}"
+        return result
+
+    # 게시된 글과 같은 이름의 초안이 남아 있으면 지운다. 안 지우면 목록에 두 번 뜬다.
+    removed = []
+    for draft in config.blog.drafts.glob("*.md"):
+        if (config.blog.posts / draft.name).exists():
+            draft.unlink()
+            removed.append(draft.stem)
+    result["removed_drafts"] = removed
+    result["note"] = "머지하고 로컬까지 맞췄다. Actions 가 빌드하면 사이트에 반영된다."
+    return result
