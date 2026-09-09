@@ -16,7 +16,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import __version__, collect, posts
+from . import __version__, check as masking, collect, drafts, posts, publish as publishing
 from .config import AccessDenied, Config, ConfigError
 from .config import load as load_config
 
@@ -139,6 +139,110 @@ def create_server(config: Config) -> MCPServer:
     )
     def list_posts_tool(project: str | None = None, status: str | None = None) -> list[dict]:
         return posts.list_posts(config, project=project, status=status)
+
+    # ── 원고 ─────────────────────────────────────────────────────────
+
+    @server.tool(
+        name="save_draft",
+        description=(
+            "초안을 drafts/ 에 저장한다. 저장 직후 자동으로 마스킹 검사를 돌려 결과를 함께 돌려준다. "
+            "until_commit 을 비우면 그 프로젝트의 현재 HEAD 로 박는다 — 다음 글이 여기서 이어진다. "
+            "초안은 저장소에 올라가지 않는다."
+        ),
+    )
+    def save_draft_tool(
+        title: str,
+        body: str,
+        project: str,
+        tags: list[str] | None = None,
+        until_commit: str | None = None,
+        summary: str | None = None,
+    ) -> dict:
+        return drafts.save_draft(
+            config, title=title, body=body, project=project,
+            tags=tags, until_commit=until_commit, summary=summary,
+        )
+
+    @server.tool(
+        name="update_post",
+        description="이미 있는 글이나 초안의 본문·제목·요약·태그를 고친다. 고친 뒤 곧바로 검사한다.",
+    )
+    def update_post_tool(
+        post_id: str,
+        body: str | None = None,
+        title: str | None = None,
+        summary: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        return drafts.update_post(
+            config, post_id=post_id, body=body, title=title, summary=summary, tags=tags
+        )
+
+    # ── 관문 ─────────────────────────────────────────────────────────
+
+    @server.tool(
+        name="check",
+        description=(
+            "초안이나 글의 마스킹 검사. 금지어·키·이메일·등록되지 않은 절대 경로를 찾는다. "
+            "level 이 block 인 항목이 하나라도 있으면 approve 할 수 없다. "
+            "걸린 원문은 그대로 돌려주지 않는다 — 결과 자체가 유출 경로가 되면 안 되기 때문이다."
+        ),
+    )
+    def check_tool(draft_id: str) -> dict:
+        path, _ = drafts._find(config, draft_id)
+        return masking.check_file(path, config)
+
+    @server.tool(
+        name="check_rules",
+        description="어떤 검사 규칙이 걸려 있는지. 금지어 목록 자체는 노출하지 않는다.",
+    )
+    def check_rules_tool() -> dict:
+        return masking.rules_summary(config)
+
+    @server.tool(
+        name="approve",
+        description=(
+            "검사를 통과한 초안을 posts/ 로 옮긴다. 걸린 항목이 남아 있으면 옮기지 않는다. "
+            "승인해도 아직 사이트에는 없다 — 반영하려면 publish 가 따로 필요하다."
+        ),
+    )
+    def approve_tool(draft_id: str) -> dict:
+        return drafts.approve(config, draft_id)
+
+    # ── 운영 ─────────────────────────────────────────────────────────
+
+    @server.tool(
+        name="publish",
+        description=(
+            "posts 폴더의 변경만 커밋하고 push 한다. push 직전에 검사를 한 번 더 돌린다. "
+            "**사용자가 명시적으로 요청했을 때만 호출한다.** 스스로 판단해서 부르지 않는다."
+        ),
+    )
+    def publish_tool(message: str | None = None) -> dict:
+        return publishing.publish(config, message=message)
+
+    @server.tool(
+        name="deploy_status",
+        description="Actions 빌드·배포 상태와 사이트 주소. push 후 실제로 반영됐는지 확인한다.",
+    )
+    def deploy_status_tool() -> dict:
+        return publishing.deploy_status(config)
+
+    @server.tool(
+        name="blog_state",
+        description="블로그 저장소 상태 — 브랜치, posts 폴더에 커밋 안 된 변경, push 안 된 커밋 수.",
+    )
+    def blog_state_tool() -> dict:
+        return publishing.blog_state(config)
+
+    @server.tool(
+        name="unpublish",
+        description=(
+            "게시된 글을 초안으로 되돌린다. 사이트에서 실제로 내리려면 그 뒤 publish 가 필요하다."
+        ),
+    )
+    def unpublish_tool(post_id: str) -> dict:
+        return drafts.unpublish(config, post_id)
 
     return server
 
