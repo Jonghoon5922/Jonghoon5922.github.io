@@ -1,0 +1,56 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+
+const posts = (
+  await getCollection('posts', ({ data }) => !data.draft && data.project === project.id)
+).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={project.data.name} description={project.data.summary}>
+  <h1>{project.data.name}</h1>
+  <p class="lede">{project.data.summary}</p>
+
+  <div class="badges" style="margin-bottom:28px">
+    <span class="badge on">{project.data.status}</span>
+    {project.data.stack.map((s) => <span class="badge">{s}</span>)}
+    {project.data.repo && (
+      <a class="badge" href={project.data.repo} target="_blank" rel="noopener">저장소 ↗</a>
+    )}
+  </div>
+
+  <div class="prose">
+    <Content />
+  </div>
+
+  <h2>이 프로젝트의 글</h2>
+  {posts.length === 0 ? (
+    <p class="empty">아직 글이 없다.</p>
+  ) : (
+    <ul class="list">
+      {posts.map((post) => (
+        <li>
+          <a class="item-title" href={`/posts/${post.id}`}>{post.data.title}</a>
+          <div class="meta">
+            <span>{fmt(post.data.date)}</span>
+            {post.data.until_commit && <span>· {post.data.until_commit}</span>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</Base>

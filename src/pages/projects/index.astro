@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const posts = await getCollection('posts', ({ data }) => !data.draft);
+const countOf = (id: string) => posts.filter((p) => p.data.project === id).length;
+---
+
+<Base title="프로젝트" description="만들고 있는 것들">
+  <h1>프로젝트</h1>
+  <p class="lede">만들고 있는 것들. 각 화면에서 그 프로젝트의 글만 모아 본다.</p>
+
+  <ul class="cards">
+    {projects.map((p) => (
+      <li>
+        <a class="card" href={`/projects/${p.id}`} style="display:block">
+          <h3>{p.data.name}</h3>
+          <p>{p.data.summary}</p>
+          <div class="badges">
+            <span class="badge on">{p.data.status}</span>
+            <span class="badge">글 {countOf(p.id)}편</span>
+          </div>
+        </a>
+      </li>
+    ))}
+  </ul>
+</Base>

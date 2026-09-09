@@ -1,0 +1,44 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+const site = '개발 일지';
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title === site ? title : `${title} · ${site}`}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">{site}</a>
+        <nav class="nav">
+          <a href="/projects">프로젝트</a>
+          <a href="/">글</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <slot />
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        만드는 것들의 기록. 글은 프로젝트의 git 기록에서 나온다.
+      </div>
+    </footer>
+  </body>
+</html>

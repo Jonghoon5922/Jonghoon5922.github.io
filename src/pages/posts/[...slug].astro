@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={post.data.title} description={post.data.summary}>
+  <article>
+    <h1>{post.data.title}</h1>
+    <div class="meta" style="margin-bottom:32px">
+      <span>{fmt(post.data.date)}</span>
+      <span>·</span>
+      <a href={`/projects/${post.data.project}`}>{post.data.project}</a>
+      {post.data.until_commit && <span>· {post.data.until_commit} 까지</span>}
+    </div>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>

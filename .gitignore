@@ -1,0 +1,21 @@
+# Astro
+node_modules/
+dist/
+.astro/
+
+# 초안 — check 를 거치지 않은 원고는 커밋하지 않는다
+drafts/
+
+# Python (ilji)
+.venv/
+__pycache__/
+*.egg-info/
+
+# 설정 실물 (금지어 목록) 은 ~/.ilji/ 에만 둔다
+ilji.toml
+
+.DS_Store
+
+# 설계 문서 — 로컬 절대 경로(C:\poc\ 등)가 적혀 있어 공개 판단 전까지 제외
+CLAUDE.md
+SPEC.md

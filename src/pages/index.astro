@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title="개발 일지" description="만드는 것들의 기록">
+  <h1>개발 일지</h1>
+  <p class="lede">만드는 것들의 기록. 프로젝트의 git 기록에서 글이 나온다.</p>
+
+  <h2>프로젝트</h2>
+  <ul class="cards">
+    {projects.map((p) => (
+      <li>
+        <a class="card" href={`/projects/${p.id}`} style="display:block">
+          <h3>{p.data.name}</h3>
+          <p>{p.data.summary}</p>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <h2>최근 글</h2>
+  {posts.length === 0 ? (
+    <p class="empty">아직 글이 없다.</p>
+  ) : (
+    <ul class="list">
+      {posts.map((post) => (
+        <li>
+          <a class="item-title" href={`/posts/${post.id}`}>{post.data.title}</a>
+          <div class="meta">
+            <span>{fmt(post.data.date)}</span>
+            <span>·</span>
+            <span>{post.data.project}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</Base>
