@@ -12,7 +12,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from . import __version__, collect, config as cfg, posts
+from . import __version__, collect, config as cfg, posts, weekly as weekly_mod
 
 app = typer.Typer(
     add_completion=False,
@@ -180,6 +180,24 @@ def serve() -> None:
 def version() -> None:
     """버전."""
     err.print(f"ilji {__version__}")
+
+
+@app.command()
+def weekly(
+    as_json: bool = typer.Option(False, "--json", help="기계가 읽을 형태로"),
+    min_commits: int = typer.Option(
+        weekly_mod.MIN_COMMITS, "--min-commits", help="이 미만이면 건너뛴다"
+    ),
+) -> None:
+    """이번 주 쓸 재료가 있는 프로젝트를 추린다.
+
+    결과는 stdout 으로 낸다 — 스케줄 에이전트가 이걸 읽고 초안을 쓴다.
+    재료가 없으면 아무 프로젝트도 나오지 않는다. 억지로 주 1회를 채우지 않는다.
+    """
+    import json as _json
+
+    result = weekly_mod.gather(cfg.load(), min_commits=min_commits)
+    print(_json.dumps(result, ensure_ascii=False, indent=2) if as_json else weekly_mod.render(result))
 
 
 if __name__ == "__main__":

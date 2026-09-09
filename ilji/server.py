@@ -16,7 +16,15 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import __version__, check as masking, collect, drafts, posts, publish as publishing
+from . import (
+    __version__,
+    check as masking,
+    collect,
+    drafts,
+    posts,
+    publish as publishing,
+    weekly as weekly_mod,
+)
 from .config import AccessDenied, Config, ConfigError
 from .config import load as load_config
 
@@ -243,6 +251,27 @@ def create_server(config: Config) -> MCPServer:
     )
     def unpublish_tool(post_id: str) -> dict:
         return drafts.unpublish(config, post_id)
+
+    @server.tool(
+        name="weekly",
+        description=(
+            "재료가 쌓인 프로젝트만 추려서 돌려준다. 커밋이 기준(기본 3건) 미만인 프로젝트는 뺀다. "
+            "'뭐 밀렸어?' 나 주간 초안 작성의 출발점으로 쓴다."
+        ),
+    )
+    def weekly_tool(min_commits: int = weekly_mod.MIN_COMMITS) -> dict:
+        return weekly_mod.gather(config, min_commits=min_commits)
+
+    @server.tool(
+        name="open_pr",
+        description=(
+            "검사를 통과한 초안을 PR 로 올린다. merge 는 사람이 한다 — 자동 게시가 아니다. "
+            "로컬 작업 트리는 건드리지 않는다. publish 와 달리 바로 사이트에 나가지 않으므로, "
+            "사람이 읽어보고 결정하게 하고 싶을 때 쓴다."
+        ),
+    )
+    def open_pr_tool(draft_id: str, title: str | None = None, body: str | None = None) -> dict:
+        return publishing.open_pr(config, draft_id, title=title, body=body)
 
     return server
 

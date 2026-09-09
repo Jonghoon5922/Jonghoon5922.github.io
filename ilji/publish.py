@@ -150,3 +150,90 @@ def blog_state(config: Config) -> dict:
         "posts_dir_dirty": dirty,
         "unpushed_commits": int(ahead or 0),
     }
+
+
+def _gh(*args: str) -> tuple[int, str, str]:
+    try:
+        done = subprocess.run(
+            ["gh", *args], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", check=False,
+        )
+    except FileNotFoundError:
+        return 127, "", "gh 명령이 없다."
+    return done.returncode, done.stdout, done.stderr
+
+
+def open_pr(
+    config: Config,
+    draft_id: str,
+    title: str | None = None,
+    body: str | None = None,
+) -> dict:
+    """초안을 PR 로 올린다. merge 는 사람이 한다.
+
+    로컬 작업 트리는 건드리지 않는다 — 브랜치를 GitHub 쪽에서 만들고 파일도 거기에 올린다.
+    도구 코드를 고치던 중에 브랜치가 갈아엎히면 안 되기 때문이다.
+    초안은 로컬 drafts/ 에 그대로 둔다. merge 후 pull 하면 posts/ 로 들어온다.
+    """
+    import base64
+    import urllib.parse
+
+    from .drafts import _find
+
+    path, status = _find(config, draft_id)
+    if status != "draft":
+        return {"opened": False, "note": f"초안이 아니다: {draft_id}"}
+
+    # 나가는 출구다. 여기서도 검사한다.
+    result = check.check_file(path, config)
+    if not result["ok"]:
+        return {"opened": False, "check": result, "note": "검사에 걸려 PR 을 열지 않았다."}
+
+    slug = _repo_slug(config)
+    if not slug:
+        return {"opened": False, "note": "GitHub 원격이 아니다."}
+
+    branch = f"post/{draft_id}"
+    rc, out, err = _gh("api", f"repos/{slug}/git/ref/heads/main", "-q", ".object.sha")
+    if rc != 0:
+        return {"opened": False, "note": f"main 을 찾지 못했다: {err.strip()}"}
+    base_sha = out.strip()
+
+    rc, _, err = _gh(
+        "api", "-X", "POST", f"repos/{slug}/git/refs",
+        "-f", f"ref=refs/heads/{branch}", "-f", f"sha={base_sha}",
+    )
+    if rc != 0 and "already exists" not in err:
+        return {"opened": False, "note": f"브랜치를 만들지 못했다: {err.strip()}"}
+
+    target = f"{config.blog.posts_dir}/{path.name}"
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    rc, _, err = _gh(
+        "api", "-X", "PUT",
+        f"repos/{slug}/contents/{urllib.parse.quote(target)}",
+        "-f", f"message=post: {draft_id}",
+        "-f", f"content={encoded}",
+        "-f", f"branch={branch}",
+    )
+    if rc != 0:
+        return {"opened": False, "note": f"파일을 올리지 못했다: {err.strip()}"}
+
+    pr_body = body or (
+        f"`{draft_id}` 초안.\n\n"
+        f"마스킹 검사 통과 (경고 {result['warnings']}건).\n"
+        "merge 하면 Actions 가 빌드해 사이트에 반영된다."
+    )
+    rc, out, err = _gh(
+        "pr", "create", "--repo", slug, "--head", branch, "--base", "main",
+        "--title", title or f"post: {draft_id}", "--body", pr_body,
+    )
+    if rc != 0:
+        return {"opened": False, "branch": branch, "note": f"PR 생성 실패: {err.strip()}"}
+
+    return {
+        "opened": True,
+        "branch": branch,
+        "url": out.strip().splitlines()[-1] if out.strip() else None,
+        "check": result,
+        "note": "PR 을 열었다. merge 는 사람이 한다. merge 되면 사이트에 반영된다.",
+    }
