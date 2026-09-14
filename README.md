@@ -7,10 +7,10 @@
 ```
 src/content/posts/   글          ← 산출물
 src/content/projects/ 프로젝트 소개
-ilji/                일지 MCP 서버 ← 기계
+blogging/                blogging MCP 서버 ← 기계
 ```
 
-## 일지 (ilji)
+## blogging
 
 등록한 프로젝트들의 git 기록과 설계 문서를 재료로 Claude 가 초안을 쓰고,
 마스킹 검사를 통과하고 사람이 승인해야 글이 나가는 로컬 MCP 서버.
@@ -32,13 +32,13 @@ ilji/                일지 MCP 서버 ← 기계
 
 ```bash
 uv sync
-uv run ilji init --blog .     # ~/.ilji/ilji.toml 생성
-uv run ilji add <프로젝트 폴더>
-uv run ilji status
-uv run ilji serve             # MCP (stdio)
+uv run blogging init --blog .     # ~/.blogging/blogging.toml 생성
+uv run blogging add <프로젝트 폴더>
+uv run blogging status
+uv run blogging serve             # MCP (stdio)
 ```
 
-설정 파일에는 금지어 목록이 들어가므로 저장소가 아니라 `~/.ilji/` 에 둔다.
+설정 파일에는 금지어 목록이 들어가므로 저장소가 아니라 `~/.blogging/` 에 둔다.
 
 ## 블로그
 

@@ -6,13 +6,13 @@ dist/
 # 초안 — check 를 거치지 않은 원고는 커밋하지 않는다
 drafts/
 
-# Python (ilji)
+# Python (blogging)
 .venv/
 __pycache__/
 *.egg-info/
 
-# 설정 실물 (금지어 목록) 은 ~/.ilji/ 에만 둔다
-ilji.toml
+# 설정 실물 (금지어 목록) 은 ~/.blogging/ 에만 둔다
+blogging.toml
 
 .DS_Store
 

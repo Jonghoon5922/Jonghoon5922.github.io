@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from ilji.check import BLOCK, WARN, scan
-from ilji.config import Blog, Config, Forbidden, Project
+from blogging.check import BLOCK, WARN, scan
+from blogging.config import Blog, Config, Forbidden, Project
 
 
 def _config(tmp_path: Path, words=None) -> Config:
@@ -14,7 +14,7 @@ def _config(tmp_path: Path, words=None) -> Config:
             words=words or [],
             patterns=[r"sk-[A-Za-z0-9]{16,}", r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"],
         ),
-        source=tmp_path / "ilji.toml",
+        source=tmp_path / "blogging.toml",
     )
 
 

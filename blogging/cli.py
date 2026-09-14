@@ -1,6 +1,6 @@
 """CLI — 설정과 프로젝트 등록, 그리고 MCP 서버 실행.
 
-설정 실물(`~/.ilji/ilji.toml`)에는 금지어 목록이 들어간다.
+설정 실물(`~/.blogging/blogging.toml`)에는 금지어 목록이 들어간다.
 그래서 이 파일은 블로그 저장소 안에 절대 만들지 않는다.
 """
 
@@ -16,7 +16,7 @@ from . import __version__, collect, config as cfg, posts, weekly as weekly_mod
 
 app = typer.Typer(
     add_completion=False,
-    help="일지 — 프로젝트의 git 기록에서 블로그 글을 뽑는 도구",
+    help="blogging — 프로젝트의 git 기록에서 블로그 글을 뽑는 도구",
     no_args_is_help=True,
 )
 
@@ -30,7 +30,7 @@ def _toml_str(value: str) -> str:
 
 def _render(config_blog: Path, projects: list[cfg.Project], forbidden: cfg.Forbidden) -> str:
     lines = [
-        "# 일지 설정. 이 파일은 공개 저장소에 두지 않는다 — 금지어 목록이 들어 있다.",
+        "# blogging 설정. 이 파일은 공개 저장소에 두지 않는다 — 금지어 목록이 들어 있다.",
         "",
         "[blog]",
         f"path = {_toml_str(config_blog.as_posix())}",
@@ -75,7 +75,7 @@ DEFAULT_PATTERNS = [
 def init(
     blog: Path = typer.Option(Path.cwd(), "--blog", help="블로그 저장소 경로"),
 ) -> None:
-    """`~/.ilji/ilji.toml` 골격을 만든다."""
+    """`~/.blogging/blogging.toml` 골격을 만든다."""
     path = cfg.config_path()
     if path.exists():
         err.print(f"[yellow]이미 있다:[/yellow] {path}")
@@ -139,7 +139,7 @@ def status() -> None:
     """프로젝트별 마지막 글 이후 커밋 수와 초안 수."""
     config = cfg.load()
 
-    table = Table(title="일지 현황", title_style="")
+    table = Table(title="blogging 현황", title_style="")
     table.add_column("프로젝트")
     table.add_column("공개")
     table.add_column("마지막 글")
@@ -172,14 +172,14 @@ def serve() -> None:
     from .server import serve as run_server
 
     config = cfg.load()
-    err.print(f"[dim]일지 MCP 서버 시작 (stdio) — 프로젝트 {len(config.projects)}개[/dim]")
+    err.print(f"[dim]blogging MCP 서버 시작 (stdio) — 프로젝트 {len(config.projects)}개[/dim]")
     run_server(config)
 
 
 @app.command()
 def version() -> None:
     """버전."""
-    err.print(f"ilji {__version__}")
+    err.print(f"blogging {__version__}")
 
 
 @app.command()

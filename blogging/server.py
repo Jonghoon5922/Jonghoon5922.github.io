@@ -66,8 +66,8 @@ def build_instructions(config: Config) -> str:
 
 def create_server(config: Config) -> MCPServer:
     server = MCPServer(
-        name="ilji",
-        title="일지 — 블로그 운영",
+        name="blogging",
+        title="blogging — 블로그 운영",
         version=__version__,
         instructions=build_instructions(config),
     )

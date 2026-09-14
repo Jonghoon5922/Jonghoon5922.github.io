@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ilji.config import AccessDenied, Project, resolve_within
+from blogging.config import AccessDenied, Project, resolve_within
 
 
 def test_안쪽_경로는_통과한다(tmp_path: Path):

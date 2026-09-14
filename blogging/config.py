@@ -1,9 +1,9 @@
 """설정과 접근 범위.
 
-이 도구가 읽을 수 있는 곳은 ilji.toml 에 등록된 프로젝트 폴더와 블로그 저장소뿐이다.
+이 도구가 읽을 수 있는 곳은 blogging.toml 에 등록된 프로젝트 폴더와 블로그 저장소뿐이다.
 그 밖의 경로 요청은 전부 거부한다 — 등록하지 않은 폴더가 실수로 글감이 되는 일이 없어야 한다.
 
-설정 실물은 ~/.ilji/ilji.toml 에만 둔다. 금지어 목록이 들어 있어서
+설정 실물은 ~/.blogging/blogging.toml 에만 둔다. 금지어 목록이 들어 있어서
 공개 저장소에 절대 들어가면 안 된다.
 """
 
@@ -14,8 +14,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-CONFIG_DIRNAME = ".ilji"
-CONFIG_FILENAME = "ilji.toml"
+CONFIG_DIRNAME = ".blogging"
+CONFIG_FILENAME = "blogging.toml"
 
 
 class ConfigError(Exception):
@@ -89,8 +89,8 @@ class Config:
 
 
 def config_dir() -> Path:
-    """설정 폴더. ILJI_HOME 으로 덮어쓸 수 있다 (테스트용)."""
-    override = os.environ.get("ILJI_HOME")
+    """설정 폴더. BLOGGING_HOME 으로 덮어쓸 수 있다 (테스트용)."""
+    override = os.environ.get("BLOGGING_HOME")
     if override:
         return Path(override)
     return Path.home() / CONFIG_DIRNAME
@@ -103,7 +103,7 @@ def config_path() -> Path:
 def load(path: Path | None = None) -> Config:
     path = path or config_path()
     if not path.exists():
-        raise ConfigError(f"설정이 없다: {path}\n`ilji init` 으로 만든다.")
+        raise ConfigError(f"설정이 없다: {path}\n`blogging init` 으로 만든다.")
 
     with path.open("rb") as f:
         raw = tomllib.load(f)
